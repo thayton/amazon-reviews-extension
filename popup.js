@@ -9,14 +9,35 @@ function loadForm()
   formSubmit();
 }
 
+//
+// Return the Amazon rating associated with result_cell
+//
+function resultCellRating(result_cell)
+{
+    var idNum = result_cell.id.match(/results_cell(\d+)/);
+    var detailLink = document.getElementById('detailLink' + idNum[1]);
+    var children = detailLink.parentNode.children;
+
+    if (children.length > 1)
+	return parseFloat(children[1].innerText);
+    else
+	return 0;
+}
+
 function rankResultCell(result_cell, rating)
 {
-    result_cells = document.getElementsByClassName('results_cell');
-    detailLink0 = document.getElementById('detailLink0');
-    detailLink0Rating = parseFloat(detailLink0.parentNode.children[1].innerText);
+    var i;
+    var result_cells = document.getElementsByClassName('results_cell');
+    var result_celli_rating; 
 
-    if (rating > detailLink0Rating)
-	result_cells[0].parentNode.insertBefore(result_cell, result_cells[0]);
+    for (i = 0; i < result_cells.length; i++) {
+	result_celli_rating = resultCellRating(result_cells[i]);
+
+	if (result_cell !== result_cells[i] && rating > result_celli_rating) {
+	    result_cells[i].parentNode.insertBefore(result_cell, result_cells[i]);
+	    break;
+	}
+    }
 }
 
 //
@@ -35,6 +56,8 @@ function getAmazonReview(isbn10, result_cell, detailLink)
 
       p.innerHTML = '' + rating;
       detailLink.parentElement.appendChild(p);
+
+      rankResultCell(result_cell, rating);
 
       console.log('Rating for ' + isbn10 + ' is ' + rating); 
   };
