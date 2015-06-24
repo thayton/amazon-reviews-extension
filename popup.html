@@ -1,0 +1,20 @@
+<!doctype html>
+<!--
+ This page is shown when the extension button is clicked, because the
+ "browser_action" field in manifest.json contains the "default_popup" key with
+ value "popup.html".
+ -->
+<html>
+  <head>
+    <title>Library Search with Amazon Reviews</title>
+    <script src="popup.js"></script>
+    <base href="https://mdpl.ent.sirsi.net/" />
+  </head>
+  <body>
+    <h1>Library Search with Amazon Reviews</h1>
+    <button id="checkPage">Search!</button>
+    <div style="display:none;" id="search-form"></div>
+    <div id="results"></div>
+    <div style="display:none" id="amazon-response"></div>
+  </body>
+</html>
