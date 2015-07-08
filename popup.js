@@ -113,12 +113,14 @@ function rankResultCell(result_cell, rating)
     var i;
     var result_cells = document.getElementsByClassName('results_cell');
     var result_celli_rating; 
+    var parent;
 
     for (i = 0; i < result_cells.length; i++) {
 	result_celli_rating = resultCellRating(result_cells[i]);
 
 	if (result_cell !== result_cells[i] && rating > result_celli_rating) {
-	    result_cells[i].parentNode.insertBefore(result_cell, result_cells[i]);
+	    parent = result_cells[i].parentNode.parentNode;
+	    parent.insertBefore(result_cell.parentNode, result_cells[i].parentNode);
 	    break;
 	}
     }
