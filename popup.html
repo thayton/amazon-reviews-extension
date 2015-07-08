@@ -6,15 +6,21 @@
  -->
 <html>
   <head>
+    <style type="text/css">
+      html { min-width:400px; }
+    </style>
     <title>Library Search with Amazon Reviews</title>
     <script src="popup.js"></script>
     <base href="https://mdpl.ent.sirsi.net/" />
   </head>
   <body>
-    <h1>Library Search with Amazon Reviews</h1>
-    <button id="checkPage">Search!</button>
-    <div style="display:none;" id="search-form"></div>
+    <div id="extension-search-form">
+      <h2>Library Search with Amazon Reviews</h2>
+      <input type="text" name="keyword" id="keyword" placeholder="Search Term"/>
+      <button style="display: inline;" id="search">Search</button>
+    </div>
     <div id="results"></div>
+    <div style="display:none;" id="library-search-form"></div>
     <div style="display:none" id="amazon-response"></div>
   </body>
 </html>

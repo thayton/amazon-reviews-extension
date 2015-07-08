@@ -1,29 +1,113 @@
 var xhr = new XMLHttpRequest();
+var keyword;
 var url1 = 'https://mdpl.ent.sirsi.net/client/catalog/search/advanced?';
 var url2 = 'https://mdpl.ent.sirsi.net/client/catalog/search/advanced.advancedsearchform';
 var amazon_url = 'http://www.amazon.com/gp/product/';
 
-function loadForm()
+document.addEventListener('DOMContentLoaded', function() {
+  var searchButton = document.getElementById('search');
+
+  searchButton.addEventListener('click', function() {
+    keyword = document.getElementById('keyword');
+    xhr.open('GET', url1, true);
+    xhr.onload = loadLibForm;
+    xhr.send()
+  }, false);
+}, false);
+
+/*
+ * Load library's advanced search form
+ */
+function loadLibForm()
 {
-  document.getElementById("search-form").innerHTML = xhr.responseText;
-  formSubmit();
+  document.getElementById("library-search-form").innerHTML = xhr.responseText;
+  submitLibForm();
 }
 
-//
-// Return the Amazon rating associated with result_cell
-//
-function resultCellRating(result_cell)
+/*
+ * Search keyword for books written in english 
+ */
+function submitLibForm()
 {
-    var idNum = result_cell.id.match(/results_cell(\d+)/);
-    var detailLink = document.getElementById('detailLink' + idNum[1]);
-    var children = detailLink.parentNode.children;
+    var form = document.forms.advancedSearchForm;
 
-    if (children.length > 1)
-	return parseFloat(children[1].innerText);
-    else
-	return 0;
+    form.elements.advancedSearchField.value = keyword.value;
+    form.elements.allWordsField.value = keyword.value;
+    form.elements.advancedSearchButton.value = 'Advanced Search';
+    form.elements.formatTypeDropDown.value = 'BOOK';
+    form.elements.languageDropDown.value = 'ENG';
+
+    var formdata = new FormData(form);
+
+    xhr.open('POST', url2, true);
+    xhr.onload = loadLibResults;
+    xhr.send(formdata)
 }
 
+/*
+ * Load results of searching library catalogue into div. Then extract
+ * isbn13 numbers of results and search for their Amazon page to get
+ * their rating
+ */
+function loadLibResults()
+{
+  var result_cells;
+
+  document.getElementById("extension-search-form").style.display = "none";
+  document.getElementById("results").innerHTML = xhr.responseText;
+
+  result_cells = document.querySelectorAll('div[id^=results_cell]');
+
+  for (i = 0; i < result_cells.length; i++) {
+      var isbn13 = document.querySelector('#' + result_cells[i].id + ' .isbnValue').value;
+      var isbn10 = isbn13to10(isbn13);
+      var detailLink = document.getElementById('detailLink' + i);
+
+      /*
+       * The links as they stand won't work since they use onclick which is 
+       * forbidden in extensions for security reasons. Update the links to
+       * each books detail page instead of having a popup.
+       */
+      var onclick = detailLink.getAttribute('onclick');
+      var link = onclick.match(/(ent:.*_ILS:\d+\/\d+\/\d+)\?/);
+      var href = 'https://mdpl.ent.sirsi.net/client/catalog/search/detailnonmodal/' + link[1];
+
+      detailLink.setAttribute('href', href);
+      detailLink.setAttribute('target', '_blank');
+      detailLink.removeAttribute('onclick');
+
+      getAmazonReview(isbn10, result_cells[i], detailLink);
+  }  
+}
+
+/*
+ * Needs to reference a particular isbn10 and its corresponding div#results_cell
+ */
+function getAmazonReview(isbn10, result_cell, detailLink)
+{
+  var xhr = new XMLHttpRequest();
+  var extractAmazonReview = function () {
+      document.getElementById('amazon-response').innerHTML = xhr.responseText;
+      var rating_text = document.getElementById('avgRating').innerText;
+      var m = rating_text.match(/\d+(\.\d+)?/);
+      var rating = parseFloat(m[0]);
+      var p = document.createElement('p');
+
+      p.innerHTML = '' + rating;
+      detailLink.parentElement.appendChild(p);
+
+      rankResultCell(result_cell, rating);
+  };
+
+  xhr.open('GET', amazon_url + isbn10, true);
+  xhr.onload = extractAmazonReview;
+  xhr.send();
+}
+
+/*
+ * Move result cells around so that cells are listed in descending
+ * order by Amazom review
+ */
 function rankResultCell(result_cell, rating)
 {
     var i;
@@ -40,68 +124,34 @@ function rankResultCell(result_cell, rating)
     }
 }
 
-//
-// Needs to reference a particular isbn10 and its corresponding
-// div#results_cell
-//
-function getAmazonReview(isbn10, result_cell, detailLink)
+/*
+ * Return the Amazon rating that was attached to result_cell
+ */
+function resultCellRating(result_cell)
 {
-  var xhr = new XMLHttpRequest();
-  var extractAmazonReview = function () {
-      document.getElementById('amazon-response').innerHTML = xhr.responseText;
-      var rating_text = document.getElementById('avgRating').innerText;
-      var m = rating_text.match(/\d+(\.\d+)?/);
-      var rating = parseFloat(m[0]);
-      var p = document.createElement('p');
+    var idNum = result_cell.id.match(/results_cell(\d+)/);
+    var detailLink = document.getElementById('detailLink' + idNum[1]);
+    var children = detailLink.parentNode.children;
 
-      p.innerHTML = '' + rating;
-      detailLink.parentElement.appendChild(p);
-
-      rankResultCell(result_cell, rating);
-
-      console.log('Rating for ' + isbn10 + ' is ' + rating); 
-  };
-
-  xhr.open('GET', amazon_url + isbn10, true);
-  xhr.onload = extractAmazonReview;
-  xhr.send();
+    if (children.length > 1)
+	return parseFloat(children[1].innerText);
+    else
+	return 0;
 }
 
-//
-// Load results of searching library catalogue into div. Then extract
-// isbn13 numbers of results and search for their Amazon page to get
-// their rating
-//
-function loadResults()
+/*
+ * Convert ISBN13 to ISBN10
+ */
+function isbn13to10(isbn13)
 {
-  document.getElementById("results").innerHTML = xhr.responseText;
-  var result_cells = document.querySelectorAll('div[id^=results_cell]');
-
-  for (i = 0; i < result_cells.length; i++) {
-      var isbn13 = document.querySelector('#' + result_cells[i].id + ' .isbnValue').value;
-      var isbn10 = isbn13to10(isbn13);
-      var detailLink = document.getElementById('detailLink' + i);
-
-      //
-      // The links as they stand won't work since they use onclick which is 
-      // forbidden in extensions for security reasons. Update the links to
-      // each books detail page instead of having a popup.
-      //
-      var onclick = detailLink.getAttribute('onclick');
-      var link = onclick.match(/(ent:.*_ILS:\d+\/\d+\/\d+)\?/);
-      var href = 'https://mdpl.ent.sirsi.net/client/catalog/search/detailnonmodal/' + link[1];
-
-      detailLink.setAttribute('href', href);
-      detailLink.setAttribute('target', '_blank');
-      detailLink.removeAttribute('onclick');
-
-      console.log(isbn13);
-      console.log(isbn10);
-
-      getAmazonReview(isbn10, result_cells[i], detailLink);
-  }  
+    var first9 = (isbn13 + '').slice(3).slice(0, -1);
+    var isbn10 = first9 + isbn10_check_digit(first9);
+    return isbn10;
 }
 
+/*
+ * Return the ISBN10 check digit given the first 9 numbers
+ */
 function isbn10_check_digit(isbn10)
 {
     var i = 0;
@@ -123,36 +173,3 @@ function isbn10_check_digit(isbn10)
 	return v + '';
 }
 
-function isbn13to10(isbn13)
-{
-    var first9 = (isbn13 + '').slice(3).slice(0, -1);
-    var isbn10 = first9 + isbn10_check_digit(first9);
-    return isbn10;
-}
-
-function formSubmit()
-{
-    var form = document.forms.advancedSearchForm;
-
-    form.elements.advancedSearchField.value = 'javascript';
-    form.elements.allWordsField.value = 'javascript';
-    form.elements.advancedSearchButton.value = 'Advanced Search';
-    form.elements.formatTypeDropDown.value = 'BOOK';
-    form.elements.languageDropDown.value = 'ENG';
-
-    var formdata = new FormData(form);
-
-    xhr.open('POST', url2, true);
-    xhr.onload = loadResults;
-    xhr.send(formdata)
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  var checkPageButton = document.getElementById('checkPage');
-  checkPageButton.addEventListener('click', function() {
-
-    xhr.open('GET', url1, true);
-    xhr.onload = loadForm;
-    xhr.send()
-  }, false);
-}, false);
