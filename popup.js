@@ -1,15 +1,17 @@
-var xhr = new XMLHttpRequest();
 var keyword;
-var url1 = 'https://mdpl.ent.sirsi.net/client/catalog/search/advanced?';
-var url2 = 'https://mdpl.ent.sirsi.net/client/catalog/search/advanced.advancedsearchform';
 var amazon_url = 'http://www.amazon.com/gp/product/';
+var library_search_page_url = 'https://mdpl.ent.sirsi.net/client/catalog/search/advanced';
+var library_detail_page_url = 'https://mdpl.ent.sirsi.net/client/catalog/search/detailnonmodal/';
 
 document.addEventListener('DOMContentLoaded', function() {
   var searchButton = document.getElementById('search');
 
   searchButton.addEventListener('click', function() {
+    var xhr;
+
     keyword = document.getElementById('keyword');
-    xhr.open('GET', url1, true);
+    xhr = new XMLHttpRequest();
+    xhr.open('GET', library_search_page_url, true);
     xhr.onload = loadLibForm;
     xhr.send()
   }, false);
@@ -20,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 function loadLibForm()
 {
-  document.getElementById("library-search-form").innerHTML = xhr.responseText;
+  document.getElementById("library-search-form").innerHTML = this.responseText;
   submitLibForm();
 }
 
@@ -38,8 +40,9 @@ function submitLibForm()
     form.elements.languageDropDown.value = 'ENG';
 
     var formdata = new FormData(form);
+    var xhr = new XMLHttpRequest();
 
-    xhr.open('POST', url2, true);
+    xhr.open('POST', form.action, true);
     xhr.onload = loadLibResults;
     xhr.send(formdata)
 }
@@ -54,7 +57,7 @@ function loadLibResults()
   var result_cells;
 
   document.getElementById("extension-search-form").style.display = "none";
-  document.getElementById("results").innerHTML = xhr.responseText;
+  document.getElementById("results").innerHTML = this.responseText;
 
   result_cells = document.querySelectorAll('div[id^=results_cell]');
 
@@ -70,7 +73,7 @@ function loadLibResults()
        */
       var onclick = detailLink.getAttribute('onclick');
       var link = onclick.match(/(ent:.*_ILS:\d+\/\d+\/\d+)\?/);
-      var href = 'https://mdpl.ent.sirsi.net/client/catalog/search/detailnonmodal/' + link[1];
+      var href = library_detail_page_url + link[1];
 
       detailLink.setAttribute('href', href);
       detailLink.setAttribute('target', '_blank');
@@ -86,6 +89,10 @@ function loadLibResults()
 function getAmazonReview(isbn10, result_cell, detailLink)
 {
   var xhr = new XMLHttpRequest();
+
+  /*
+   * Extract the rating from an Amazon product page
+   */ 
   var extractAmazonReview = function () {
       document.getElementById('amazon-response').innerHTML = xhr.responseText;
       var rating_text = document.getElementById('avgRating').innerText;
