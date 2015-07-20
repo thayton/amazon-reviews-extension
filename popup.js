@@ -1,7 +1,7 @@
-var keyword;
-var amazon_url = 'http://www.amazon.com/gp/product/';
 var library_search_page_url = 'https://mdpl.ent.sirsi.net/client/catalog/search/advanced';
 var library_detail_page_url = 'https://mdpl.ent.sirsi.net/client/catalog/search/detailnonmodal/';
+var amazon_url = 'http://www.amazon.com/gp/product/';
+var keyword;
 
 document.addEventListener('DOMContentLoaded', function() {
   var searchButton = document.getElementById('search');
@@ -12,27 +12,24 @@ document.addEventListener('DOMContentLoaded', function() {
     keyword = document.getElementById('keyword');
     xhr = new XMLHttpRequest();
     xhr.open('GET', library_search_page_url, true);
-    xhr.onload = loadLibForm;
+    xhr.onload = submitLibForm;
     xhr.send()
   }, false);
 }, false);
 
-/*
- * Load library's advanced search form
- */
-function loadLibForm()
-{
-  document.getElementById("library-search-form").innerHTML = this.responseText;
-  submitLibForm();
-}
 
 /*
  * Search keyword for books written in english 
  */
 function submitLibForm()
 {
-    var form = document.forms.advancedSearchForm;
+    var form;
 
+    /* Load library's advanced search form */
+    document.getElementById("library-search-form").innerHTML = this.responseText;
+
+    /* Search by keyword for English language books */
+    form = document.forms.advancedSearchForm;
     form.elements.advancedSearchField.value = keyword.value;
     form.elements.allWordsField.value = keyword.value;
     form.elements.advancedSearchButton.value = 'Advanced Search';
@@ -79,21 +76,23 @@ function loadLibResults()
       detailLink.setAttribute('target', '_blank');
       detailLink.removeAttribute('onclick');
 
-      getAmazonReview(isbn10, result_cells[i], detailLink);
+      getAmazonRating(isbn10, result_cells[i], detailLink);
   }  
 }
 
 /*
  * Needs to reference a particular isbn10 and its corresponding div#results_cell
  */
-function getAmazonReview(isbn10, result_cell, detailLink)
+function getAmazonRating(isbn10, result_cell, detailLink)
 {
   var xhr = new XMLHttpRequest();
 
   /*
-   * Extract the rating from an Amazon product page
+   * Extract the rating from the Amazon product page, insert it into the 
+   * library search results page and then reorder the results in order
+   * of rating.
    */ 
-  var extractAmazonReview = function () {
+  var extractAmazonRating = function () {
       var avgRatingText,
           avgRating,
           m,
@@ -118,7 +117,7 @@ function getAmazonReview(isbn10, result_cell, detailLink)
   };
 
   xhr.open('GET', amazon_url + isbn10, true);
-  xhr.onload = extractAmazonReview;
+  xhr.onload = extractAmazonRating;
   xhr.send();
 }
 
