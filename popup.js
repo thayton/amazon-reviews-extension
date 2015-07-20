@@ -94,16 +94,27 @@ function getAmazonReview(isbn10, result_cell, detailLink)
    * Extract the rating from an Amazon product page
    */ 
   var extractAmazonReview = function () {
+      var avgRatingText,
+          avgRating,
+          m,
+          p; 
+
       document.getElementById('amazon-response').innerHTML = xhr.responseText;
-      var rating_text = document.getElementById('avgRating').innerText;
-      var m = rating_text.match(/\d+(\.\d+)?/);
-      var rating = parseFloat(m[0]);
-      var p = document.createElement('p');
 
-      p.innerHTML = '' + rating;
+      avgRatingText = document.getElementById('avgRating').innerText;
+      m = avgRatingText.match(/\d+(\.\d+)?/);
+
+      avgRating = parseFloat(m[0]);
+
+      p = document.createElement('p');
+      p.innerHTML = avgRating.toString();
+
+      /* 
+       * Attach the rating to the library search results and then reorder
+       * the search results by Amazon rating
+       */
       detailLink.parentElement.appendChild(p);
-
-      rankResultCell(result_cell, rating);
+      rankResultCell(result_cell, avgRating);
   };
 
   xhr.open('GET', amazon_url + isbn10, true);
