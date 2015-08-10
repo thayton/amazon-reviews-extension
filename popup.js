@@ -1,22 +1,47 @@
-var library_search_page_url = 'https://mdpl.ent.sirsi.net/client/catalog/search/advanced';
-var library_detail_page_url = 'https://mdpl.ent.sirsi.net/client/catalog/search/detailnonmodal/';
+var library_search_page_url; // Set in options.html (eg: https://mdpl.ent.sirsi.net/client/catalog/search/advanced)
+var library_detail_page_url; // Set in options.html (eg: https://mdpl.ent.sirsi.net/client/catalog/search/detailnonmodal/)
 var amazon_url = 'http://www.amazon.com/gp/product/';
 var keyword;
 
 document.addEventListener('DOMContentLoaded', function() {
   var searchButton = document.getElementById('search');
 
+  /* Load configuration options then start the scraping */
   searchButton.addEventListener('click', function() {
-    var xhr;
-
-    keyword = document.getElementById('keyword');
-    xhr = new XMLHttpRequest();
-    xhr.open('GET', library_search_page_url, true);
-    xhr.onload = submitLibForm;
-    xhr.send()
+      keyword = document.getElementById('keyword');
+      getConfig(startScrape);
   }, false);
 }, false);
 
+function getConfig(callback) {
+  chrome.storage.sync.get(['library_search_page_url',
+                           'library_detail_page_url'], 
+      function(items) {
+         var base;
+         var hostname;
+
+         library_search_page_url = items['library_search_page_url'];
+         library_detail_page_url = items['library_detail_page_url'];
+
+         hostname = library_search_page_url.match(/(https?:\/\/[^\/]+\/)/);
+         hostname = hostname[1];
+
+         base = document.getElementsByTagName('base')[0];
+         base.href = hostname;
+
+         callback();
+      }
+  );
+}
+
+function startScrape() {
+  var xhr;
+
+  xhr = new XMLHttpRequest();
+  xhr.open('GET', library_search_page_url, true);
+  xhr.onload = submitLibForm;
+  xhr.send()
+}
 
 /*
  * Search keyword for books written in english 
@@ -133,13 +158,13 @@ function rankResultCell(result_cell, rating)
     var parent;
 
     for (i = 0; i < result_cells.length; i++) {
-	result_celli_rating = resultCellRating(result_cells[i]);
+        result_celli_rating = resultCellRating(result_cells[i]);
 
-	if (result_cell !== result_cells[i] && rating > result_celli_rating) {
-	    parent = result_cells[i].parentNode.parentNode;
-	    parent.insertBefore(result_cell.parentNode, result_cells[i].parentNode);
-	    break;
-	}
+        if (result_cell !== result_cells[i] && rating > result_celli_rating) {
+            parent = result_cells[i].parentNode.parentNode;
+            parent.insertBefore(result_cell.parentNode, result_cells[i].parentNode);
+            break;
+        }
     }
 }
 
@@ -153,9 +178,9 @@ function resultCellRating(result_cell)
     var children = detailLink.parentNode.children;
 
     if (children.length > 1)
-	return parseFloat(children[1].innerText);
+        return parseFloat(children[1].innerText);
     else
-	return 0;
+        return 0;
 }
 
 /*
@@ -178,8 +203,8 @@ function isbn10_check_digit(isbn10)
     var v;
 
     for (n = 10; n > 1; n--) {
-	s += n * Number(isbn10[i]);
-	i++;
+        s += n * Number(isbn10[i]);
+        i++;
     }
 
     s = s % 11;
@@ -187,8 +212,8 @@ function isbn10_check_digit(isbn10)
     v = s % 11;
 
     if (v == 10)
-	return 'x';
+        return 'x';
     else
-	return v + '';
+        return v + '';
 }
 

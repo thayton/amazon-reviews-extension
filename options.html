@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      div {
+        line-height: 30px;
+      }
+    </style>
+
+    <title>
+      Library Search with Amazon Ratings Extension Options
+    </title>
+  </head>
+
+  <body>
+    <form id="options_form">
+      <div>
+	<label for="library_search_page_url">Library Search Page URL</label>
+	<input type="text" id="library_search_page_url" name="library_search_page_url">
+      </div>
+      <div>
+	<label for="library_detail_page_url">Library Detail Page URL</label>
+	<input type="text" id="library_detail_page_url" name="library_detail_page_url">
+      </div>
+    </form>
+
+    <div id="status"></div>
+    <div>
+      <button id="save">Save</button>
+    </div>
+
+    <script src="options.js"></script>
+  </body>
+</html>
